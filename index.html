@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>DeepALTR v1.0</title>
+    <meta charset="UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="//unpkg.com/force-graph"></script>
+    <style>
+      @font-face {
+        font-family: Whyte;
+        src: url(ABCWhyteEdu-Bold.otf);
+      }
+      @font-face {
+        font-family: WhyteBlack;
+        src: url(ABCWhyteEdu-Black.otf);
+      }
+
+      @font-face {
+        font-family: Favorit;
+        src: url(ABCFavoritEdu-Bold.otf);
+      }
+
+      @font-face {
+        font-family: FavoritReg;
+        src: url(ABCFavoritEdu-Regular.otf);
+      }
+
+      @font-face {
+        font-family: Diatype;
+        src: url(ABCDiatypeEdu-Regular.otf);
+      }
+
+      canvas#relationshipGraph {
+        background-color: #f9f9f9;
+      }
+
+      body {
+        /* background-color: #e5e5e5; */
+        background: linear-gradient(
+            179.82deg,
+            rgba(255, 255, 248, 0.4) 7.01%,
+            rgba(254, 241, 237, 0.4) 49.08%,
+            rgba(229, 233, 251, 0.4) 99.84%
+          ),
+          linear-gradient(180deg, rgba(255, 255, 255, 0) 9.25%, #ffffff 34.93%),
+          #fefef6;
+        background-attachment: fixed;
+        height: 100%;
+      }
+
+      .slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 6px;
+        border-radius: 5px;
+        background: linear-gradient(to right, #99ffb0, #ff9999);
+        outline: none;
+        -webkit-transition: 0.2s;
+        transition: opacity 0.2s;
+      }
+
+      .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        border-color: #000000;
+        border-style: solid;
+        border-width: 3px;
+        background: #ffffff;
+        cursor: pointer;
+      }
+
+      .slider::-moz-range-thumb {
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        background: #4caf50;
+        cursor: pointer;
+      }
+
+      #messageContent {
+        font-family: FavoritReg;
+        font-size: 9pt;
+        position: relative;
+        top: 3px;
+        color: #a9a9a9;
+        margin: 0px;
+      }
+
+      #messageAge {
+        font-family: Favorit;
+        font-size: 9pt;
+        position: relative;
+        color: #d2d2d2;
+        left: 15px;
+        float: left;
+        margin: 0px;
+      }
+
+      #messageName {
+        font-family: Favorit;
+        font-size: 9pt;
+        position: relative;
+        color: #585858;
+        float: left;
+        margin: 0px;
+      }
+
+      #messageTitle {
+        position: relative;
+        display: flex;
+        flex-direction: row;
+        margin: 0px;
+      }
+
+      #message {
+        position: relative;
+        display: flex;
+        margin-bottom: 15px;
+        flex-direction: column;
+        /* padding-bottom: 30px; */
+        min-height: 10px;
+        height: auto;
+        width: 345px;
+      }
+
+      #flaggedmessagesFeed::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* Hide scrollbar for IE, Edge and Firefox */
+      #flaggedmessagesFeed {
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
+      }
+
+      .pillDesc {
+        font-family: Diatype;
+        font-size: 9pt;
+        position: absolute;
+        top: -2px;
+        right: 12.5px;
+        color: lightgray;
+      }
+
+      .pillTitle {
+        font-family: Favorit;
+        font-size: 11pt;
+        position: absolute;
+        top: -1px;
+        left: 13.5px;
+        color: #3f3f3f;
+      }
+
+      .pillNumber {
+        font-family: Whyte;
+        font-size: 17pt;
+        position: absolute;
+        top: 10px;
+        left: 13.5px;
+        color: #242424;
+      }
+
+      .pillDiff {
+        font-family: Whyte;
+        font-size: 7.5pt;
+        position: absolute;
+        top: 47px;
+        left: 13.5px;
+      }
+
+      .pillDiffGood {
+        color: #00c72c;
+      }
+
+      .pillDiffBad {
+        color: #dd2e44;
+      }
+
+      .pillTitleBig {
+        font-size: 13pt;
+      }
+
+      .pill {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        box-shadow: 3px 3px 0px lightgray;
+        background-color: white;
+        margin-top: 20px;
+        margin-left: 20px;
+        float: left;
+        float: left;
+      }
+
+      .pillDataStandard {
+        width: 248px;
+        height: 139px;
+      }
+
+      .pillFlagged {
+        width: 399px;
+        height: 323px;
+      }
+
+      .pillRelationships {
+        width: 393px;
+        height: 364px;
+      }
+
+      .pillDataCanvas {
+        position: absolute;
+        bottom: -8px;
+        left: -8px;
+      }
+
+      #relationshipGraph {
+        position: absolute;
+        left: 12px;
+        bottom: 12px;
+        width: 370px;
+        height: 270px;
+        right: 12.5px;
+        background-color: white;
+        overflow: hidden;
+        border-radius: 10px;
+      }
+
+      #flaggedmessagesFeed {
+        position: absolute;
+        left: 12px;
+        top: 55px;
+        width: 360px;
+        height: 204px;
+        background-color: #f9f9f9;
+        overflow: hidden;
+        padding-left: 15px;
+        padding-top: 12px;
+        border-radius: 10px;
+        overflow: scroll;
+      }
+
+      .responseBar {
+        position: absolute;
+        background-color: #ffffff;
+        max-width: 375px;
+        max-height: 38px;
+        top: 279px;
+        left: 12px;
+        display: flex;
+        flex-direction: row;
+      }
+
+      img {
+        width: 35px;
+        height: 35px;
+      }
+
+      ::placeholder {
+        /* Chrome, Firefox, Opera, Safari 10.1+ */
+        color: #bfbfbf;
+      }
+
+      input:focus,
+      textarea:focus,
+      select:focus {
+        outline: none;
+        background-color: #f9f9f9;
+      }
+
+      input {
+        border: none;
+        width: 158px;
+        background-color: #f9f9f9;
+        font-family: Diatype;
+        color: #bfbfbf;
+        margin-top: 2px;
+        margin-left: 5px;
+        font-size: 12pt;
+      }
+    </style>
+  </head>
+  <!-- <body style="background-color: #e5e5e5"> -->
+  <body>
+    <!-- <img src="hr.png" width="248" /> -->
+    <div id="useractivityPill" class="pill pillDataStandard">
+      <h1 class="pillTitle">User Activity</h1>
+      <h1 class="pillNumber">12,893<span style="font-size: 10pt">pts</span></h1>
+      <h2 class="pillDiff pillDiffGood">+10% up</h2>
+      <h3 class="pillDesc">Last 30 days</h3>
+      <canvas
+        id="useractivityData"
+        height="69px"
+        width="260px"
+        style="position: absolute; bottom: -8px; left: -8px"
+      ></canvas>
+    </div>
+    <div id="messageperhourPill" class="pill pillDataStandard">
+      <h1 class="pillTitle">Messages/hr</h1>
+      <h1 class="pillNumber">23<span style="font-size: 10pt">msg</span></h1>
+      <h2 class="pillDiff pillDiffGood">+10% average</h2>
+      <h3 class="pillDesc">Current</h3>
+      <canvas
+        id="messageperhourData"
+        height="69px"
+        width="260px"
+        style="position: absolute; bottom: -8px; left: -8px"
+      ></canvas>
+    </div>
+    <div id="serverrankPill" class="pill pillDataStandard">
+      <h1 class="pillTitle">Server Ranking</h1>
+      <h1 class="pillNumber">904,342<span style="font-size: 10pt">st</span></h1>
+      <h2 class="pillDiff pillDiffGood">+1.2% gain</h2>
+      <h3 class="pillDesc">Year To Date</h3>
+      <canvas
+        id="serverrankData"
+        height="69px"
+        width="260px"
+        style="position: absolute; bottom: -8px; left: -8px"
+      ></canvas>
+    </div>
+    <div id="membercountPill" class="pill pillDataStandard">
+      <h1 class="pillTitle">Member Count</h1>
+      <h1 class="pillNumber">90,203<span style="font-size: 10pt"></span></h1>
+      <h2 class="pillDiff pillDiffBad">-10% down</h2>
+      <h3 class="pillDesc">Last 30 days</h3>
+      <canvas
+        id="membercountData"
+        height="69px"
+        width="260px"
+        style="position: absolute; bottom: -8px; left: -8px"
+      ></canvas>
+    </div>
+    <div id="memberprojPill" class="pill pillDataStandard">
+      <h1 class="pillTitle">Member Projections</h1>
+      <h1 class="pillNumber">
+        104,531<span style="font-size: 10pt"> by Sept</span>
+      </h1>
+      <h2 class="pillDiff pillDiffGood">+15.8% gain</h2>
+      <h3 class="pillDesc">Q4 Results</h3>
+      <canvas
+        id="memberprojData"
+        height="69px"
+        width="260px"
+        class="pillDataCanvas"
+      ></canvas>
+    </div>
+    <div id="flaggedmessagesPill" class="pill pillFlagged">
+      <h1 class="pillTitle pillTitleBig">Flagged Messages</h1>
+      <h3 class="pillDesc">Live Chat</h3>
+      <div
+        class="slidecontainer"
+        width="133px"
+        style="position: absolute; top: 30px; left: 13.5px"
+      >
+        <input
+          type="range"
+          min="1"
+          max="100"
+          value="72"
+          class="slider"
+          id="myRange"
+        />
+      </div>
+      <div id="flaggedmessagesFeed">
+        <div id="message">
+          <div id="messageTitle">
+            <h3 id="messageName">Andrew Goodridge</h3>
+            <h3 id="messageAge">15 min ago</h3>
+          </div>
+          <p id="messageContent">
+            i hope you get vitamin D deficiency fool - this is a generic toxic
+            message that our AI would flag
+          </p>
+        </div>
+        <div id="message">
+          <div id="messageTitle">
+            <h3 id="messageName">Fredrick Douglass</h3>
+            <h3 id="messageAge">11 min ago</h3>
+          </div>
+          <p id="messageContent">
+            i hate you, i want to kill you, give me 200$ dollars is the best dr.
+            phil quote ever. - lol
+          </p>
+        </div>
+        <div id="message">
+          <div id="messageTitle">
+            <h3 id="messageName">notch</h3>
+            <h3 id="messageAge">5 min ago</h3>
+          </div>
+          <p id="messageContent">fuck off</p>
+        </div>
+        <div id="message">
+          <div id="messageTitle">
+            <h3 id="messageName">Lords of Plural</h3>
+            <h3 id="messageAge">1 min ago</h3>
+          </div>
+          <p id="messageContent">
+            Stop being british or I’ll throw your tea into the ocean. - lol no
+            im not joking im being toxic.
+          </p>
+        </div>
+        <div id="message">
+          <div id="messageTitle">
+            <h3 id="messageName">Lords of Plural</h3>
+            <h3 id="messageAge">1 min ago</h3>
+          </div>
+          <p id="messageContent">go suck some unwashed toes you cretin</p>
+        </div>
+        <div id="message">
+          <div id="messageTitle">
+            <h3 id="messageName">santiarr</h3>
+            <h3 id="messageAge">now</h3>
+          </div>
+          <p id="messageContent">i don't like hispanic people</p>
+        </div>
+        <div id="message">
+          <div id="messageTitle">
+            <h3 id="messageName">FredrickDouglass</h3>
+            <h3 id="messageAge">now</h3>
+          </div>
+          <p id="messageContent">
+            wow pretty racist you should go evaluate your personal biases
+            motherfucker.
+          </p>
+        </div>
+        <div id="message">
+          <div id="messageTitle">
+            <h3 id="messageName">dexter</h3>
+            <h3 id="messageAge">now</h3>
+          </div>
+          <p id="messageContent">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
+            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+            aliquip ex ea commodo consequat. Duis aute irure dolor in
+            reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
+            pariatur.
+          </p>
+        </div>
+        <div
+          id="message"
+          style="background-color: #ffffff; margin-left: -6px; padding: 6px; border-radius: 5px;"
+        >
+          <div id="messageTitle">
+            <h3 id="messageName">Jeffrey Bezos</h3>
+            <h3 id="messageAge">now</h3>
+          </div>
+          <p id="messageContent">
+            what the fuck dexter - how do you know latin
+          </p>
+        </div>
+      </div>
+      <div id="responseBar" class="responseBar">
+        <div
+          id="replyBox"
+          style="background-color: #f9f9f9; width: 200px; margin-right: 10px; margin-bottom: 2px; margin-top: 1px;border-radius: 8px; padding-top: 5px; padding: 5px;"
+        >
+          <input type="text" placeholder="Type reply here..." />
+          <img
+            class="sendbutton"
+            src="paper-plane (1) 1.svg"
+            alt="Send reply"
+            style="width:  18px; height: 18px; position: absolute; right: 185px; margin-top: 4px;"
+          />
+          <img
+            class="sendbuttonHighlighted"
+            src="paper-plane (1) 3.svg"
+            alt="Send reply"
+            style="width:  18px; height: 18px; position:absolute; right: 185px; margin-top: 4px; visibility: hidden;"
+          />
+        </div>
+        <div id="ok" style="margin-right: 6px;">
+          <img
+            src="Group 49.svg"
+            alt="This message is OK"
+            style="width:  35px; height: 35px;"
+          />
+        </div>
+        <div id="warn" style="margin-right: 6px">
+          <img
+            src="Group 50.svg"
+            alt="Warn whoever said this"
+            style="width:  35px; height: 35px;"
+          />
+        </div>
+        <div id="delete" style="margin-right: 6px">
+          <img
+            src="Group 51.svg"
+            alt="Delete this message"
+            style="width:  35px; height: 35px;"
+          />
+        </div>
+        <div id="mute" style="margin-right: 6px">
+          <img
+            src="Group 52.svg"
+            alt="Mute whoever said this for 15 min"
+            style="width:  35px; height: 35px;"
+          />
+        </div>
+      </div>
+    </div>
+    <div id="relationshipsPill" class="pill pillRelationships">
+      <h1 class="pillTitle">Relationship Analysis</h1>
+      <h1 class="pillNumber">
+        4,503<span style="font-size: 10pt"> links</span>
+      </h1>
+      <h2 class="pillDiff pillDiffGood">+203 links &nbsp; +5 nodes</h2>
+      <h2
+        id="loadingstatus"
+        style="
+          font-family: Whyte;
+          font-size: 7.5pt;
+          position: absolute;
+          top: 55px;
+          right: 13.5px;
+          color: #21d048;
+          opacity: 0.5;
+        "
+      >
+        Live <span style="font-size: 6.5pt">•</span>
+      </h2>
+      <h3 class="pillDesc">Last two weeks</h3>
+      <div id="relationshipGraph"></div>
+    </div>
+    <script src="relationships.js" type="text/javascript"></script>
+    <script>
+      var olddata = [12, 19, 3, 5, 2, 3, 19, 3, 5, 2, 3, 19, 3, 5, 2, 1, 4, 19];
+      var data = [0, 0, 1, 3, 3, 25, 23, 6, 9, 5, 1, 0, 28, 48, 19, 12, 37, 4];
+      var stabledata = [2, 4, 3, 5, 2, 3, 5, 3, 5, 2, 3, 5, 3, 5, 2, 1, 4, 6];
+      var projections = [90203, 104531];
+
+      var messageHr = {
+        id: "messageperhourData",
+        name: "messageperhourPill",
+        data: data,
+        linecolor: "#55ACEE",
+        fillcolor: "#55ACEE",
+        linewidth: 5,
+      };
+      var userActivity = {
+        id: "useractivityData",
+        name: "useractivityPill",
+        data: olddata,
+        linecolor: "#55ACEE",
+        fillcolor: "#D7EEFF",
+        linewidth: 3,
+      };
+      var serverRank = {
+        id: "serverrankData",
+        name: "serverrankPill",
+        data: stabledata,
+        linecolor: "#DA3939",
+        fillcolor: "#FFC6C6",
+        linewidth: 2,
+        tension: 0,
+        clearance: 0.1,
+      };
+      var memberCount = {
+        id: "membercountData",
+        name: "membercountPill",
+        data: stabledata,
+        linecolor: "#DA3939",
+        fillcolor: "#DA3939",
+        linewidth: 0,
+        tension: 0,
+        type: "bar",
+        clearance: 0.1,
+      };
+      var memberProjections = {
+        id: "memberprojData",
+        name: "memberprojPill",
+        data: projections,
+        linecolor: "#DA3939",
+        fillcolor: "#FFC6C6",
+        dash: [10, 5],
+      };
+      var pills = [
+        messageHr,
+        userActivity,
+        serverRank,
+        memberCount,
+        memberProjections,
+      ];
+      for (pill of pills) {
+        var pillData = pill.data;
+        var pillLineColor = pill.linecolor;
+        var pillFillColor = pill.fillcolor;
+        var dashSettings = pill.dash ? pill.dash : [0, 0];
+        var lineWidth = pill.linewidth;
+        var tensionx = pill.tension !== undefined ? pill.tension : 0.35;
+        var type = pill.type ? pill.type : "line";
+        var min = -1;
+        var max = -1;
+        var smallest = 10000000000;
+        var largest = 0;
+        var shifted = false;
+        var labels = [];
+        for (let i = 1; i <= pill.data.length; i++) {
+          labels.push(i);
+        }
+        console.log(labels);
+        for (point of pillData) {
+          if (point > largest) {
+            largest = point;
+          }
+          if (point < smallest) {
+            smallest = point;
+          }
+        }
+        var clearancepercent =
+          pill.clearance !== undefined ? pill.clearance : 0.2;
+        var range = largest - smallest;
+        var clearance = largest * 0.05;
+        var shiftup = range * 0.5;
+        // var shiftup = 20;
+        // shiftup = 10;
+        function update(inputdata, amount) {
+          var output = [];
+          for (point of inputdata) {
+            output.push(point + amount);
+          }
+          return output;
+        }
+        if (smallest < shiftup) {
+          shifted = true;
+          pillData = update(pillData, shiftup);
+          smallest += shiftup;
+          largest += shiftup;
+        }
+        min = smallest - shiftup;
+        max = largest + clearance;
+        console.log(pillData);
+        console.log(min);
+        console.log(max);
+        console.log(smallest);
+        console.log(largest);
+        // ("#55ACEE");
+        var ctx = document.getElementById(pill.id).getContext("2d");
+        var myChart = new Chart(ctx, {
+          type: type,
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                categoryPercentage: 1.0,
+                barPercentage: 1.0,
+                borderColor: pillLineColor,
+                borderWidth: lineWidth,
+                borderDash: dashSettings,
+                fill: true,
+                backgroundColor: pillFillColor,
+                data: pillData,
+              },
+            ],
+          },
+          options: {
+            responsive: false,
+            plugins: {
+              tooltip: {
+                enabled: false,
+              },
+              legend: {
+                display: false,
+              },
+            },
+            elements: {
+              point: {
+                radius: 0,
+              },
+            },
+            tension: tensionx,
+            scales: {
+              y: {
+                min: min,
+                max: max,
+                // beginAtZero: true,
+                ticks: {
+                  display: false,
+                },
+                grid: {
+                  drawBorder: false,
+                  display: false,
+                },
+              },
+              x: {
+                ticks: {
+                  display: false,
+                },
+                grid: {
+                  drawBorder: false,
+                  display: false,
+                },
+              },
+            },
+          },
+        });
+      }
+    </script>
+  </body>
+</html>
